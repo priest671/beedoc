@@ -5,7 +5,7 @@ sort: 3
 
 # CRUD of Object
 
-If already know the value of primary key, `Read`, `Insert`, `Update`, `Delete` can be used to manipulate the object.
+If the value of the primary key is already known, `Read`, `Insert`, `Update`, `Delete` can be used to manipulate the object.
 
 ```go
 o := orm.NewOrm()
@@ -39,16 +39,35 @@ if err == orm.ErrNoRows {
 }
 ```
 
-Read use primary key by default. Can use other fields as well:
+Read uses primary key by default. But it can use other fields as well:
 
 ```go
 user := User{Name: "slene"}
 err = o.Read(&user, "Name")
 ...
 ```
-Other fields of the object are the default value according to the field type.
+Other fields of the object are set to the default value according to the field type.
 
 For detailed single object query, see [One](query.md#one)
+
+## ReadOrCreate
+
+Try to read a row from the database, or insert one if it doesn't exist.
+
+At least one condition field must be supplied, multipe condition fields are also supported.
+
+```go
+o := orm.NewOrm()
+user := User{Name: "slene"}
+// Three return values：Is Created，Object Id，Error
+if created, id, err := o.ReadOrCreate(&user, "Name"); err == nil {
+	if created {
+		fmt.Println("New Insert an object. Id:", id)
+	} else {
+		fmt.Println("Get an object. Id:", id)
+	}
+}
+```
 
 ## Insert
 
@@ -61,23 +80,49 @@ user.Name = "slene"
 user.IsActive = true
 
 id, err := o.Insert(&user)
-if err != nil {
+if err == nil {
 	fmt.Println(id)
 }
 ```
 
-After creating it will assign values for auto fields.
+After creation it will assign values for auto fields.
+
+## InsertMulti
+
+Insert multiple objects in one api.
+
+Like sql statement:
+
+```
+insert into table (name, age) values("slene", 28),("astaxie", 30),("unknown", 20)
+```
+
+The 1st param is the number of records to insert in one bulk statement. The 2nd param is models slice.
+
+The return value is the number of successfully inserted rows.
+
+```go
+users := []User{
+	{Name: "slene"},
+	{Name: "astaxie"},
+	{Name: "unknown"},
+	...
+}
+successNums, err := o.InsertMulti(100, users)
+```
+
+When bulk is equal to 1, then models will be inserted one by one.
 
 ## Update
 
-The first return value is affected rows num.
+The first return value is the number of affected rows.
 
 ```go
 o := orm.NewOrm()
 user := User{Id: 1}
 if o.Read(&user) == nil {
 	user.Name = "MyName"
-	if num, err := o.Update(&user); err != nil {
+	if num, err := o.Update(&user); err == nil {
 		fmt.Println(num)
 	}
 }
@@ -97,16 +142,16 @@ For detailed object update, see [One](query.md#one)
 
 ## Delete
 
-The first return value is affected rows num.
+The first return value is the number of affected rows.
 
 ```go
 o := orm.NewOrm()
-if num, err := o.Delete(&User{Id: 1}); err != nil {
+if num, err := o.Delete(&User{Id: 1}); err == nil {
 	fmt.Println(num)
 }
 ```
 
-Delete will also manipulate reverse relationship. E.g.: `Post` has a foreign key to `User`. If on_delete is set to `cascade`, `Post` will be deleted while delete `User`.
+Delete will also manipulate reverse relationships. E.g.: `Post` has a foreign key to `User`. If on_delete is set to `cascade`, `Post` will be deleted while delete `User`.
 
 After deleting it will clean up values for auto fields.
 

@@ -94,6 +94,13 @@ qs.Filter("name__icontains", "slene")
 ```go
 qs.Filter("profile__age__in", 17, 18, 19, 20)
 // WHERE profile.age IN (17, 18, 19, 20)
+
+
+ids:=[]int{17,18,19,20}
+qs.Filter("profile__age__in", ids)
+// WHERE profile.age IN (17, 18, 19, 20)
+
+// 同上效果
 ```
 
 ### gt / gte
@@ -329,7 +336,7 @@ fmt.Printf("Affected Num: %s, %s", num, err)
 num, err := o.QueryTable("user").Update(orm.Params{
 	"nums": orm.ColValue(orm.Col_Add, 100),
 })
-// SET nums = nums + 1
+// SET nums = nums + 100
 ```
 
 orm.ColValue 支持以下操作
@@ -362,7 +369,7 @@ qs := o.QueryTable("user")
 i, _ := qs.PrepareInsert()
 for _, user := range users {
 	id, err := i.Insert(user)
-	if err != nil {
+	if err == nil {
 		...
 	}
 }
@@ -432,6 +439,7 @@ o.QueryTable("post").Filter("Content__istartswith", "prefix string").One(&post, 
 对象的其他字段值将会是对应类型的默认值
 
 ### Values
+
 返回结果集的 key => value 值
 
 key 为 Model 里的 Field name，value 的值 以 string 保存
